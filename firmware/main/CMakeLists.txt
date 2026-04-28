@@ -1,2 +1,20 @@
-idf_component_register(SRCS "main.c"
-                    INCLUDE_DIRS ".")
+idf_component_register(
+                      SRCS 
+                          "main.c"
+                          "input_system/input_test.c"
+                          "input_system/storage_text.c"
+                          "input_system/storage_vfs.c"
+                          "connections/wifi.c"
+
+                      INCLUDE_DIRS 
+                          "."
+                          "input_system"
+                          "connections"
+                      PRIV_REQUIRES
+                          esp_event
+                          esp_netif
+                          esp_wifi
+                          nvs_flash
+                          esp_driver_uart
+                          spiffs
+                      )

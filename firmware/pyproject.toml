@@ -1,0 +1,24 @@
+[project]
+name = "autoboot-esp-tests"
+version = "0.1.0"
+description = "Pytest integration tests for the AutoBoot ESP32 firmware"
+requires-python = ">=3.11"
+dependencies = [
+    "pytest==8.4.2",
+    "pytest-embedded==2.7.0",
+    "pytest-embedded-idf==2.7.0",
+    "pytest-embedded-serial==2.7.0",
+    "pytest-embedded-serial-esp==2.7.0",
+]
+
+[tool.pytest.ini_options]
+addopts = "-s"
+testpaths = ["tests"]
+python_files = ["pytest_*.py", "test_*.py"]
+markers = [
+    "esp32: run on ESP32 targets",
+    "generic: run on the generic test environment",
+]
+filterwarnings = [
+    "ignore:record_xml_attribute is an experimental feature:pytest.PytestExperimentalApiWarning",
+]
