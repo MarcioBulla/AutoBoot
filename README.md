@@ -1,117 +1,113 @@
 # AutoBoot
 
-Project to use an ESP32 as a remote power-on and control agent for a computer.
+AutoBoot is an ESP32-based device designed to control a computer remotely.
 
-The core idea is to:
-- power on or wake a computer remotely
-- receive commands through MQTT
-- update the ESP32 firmware remotely through OTA
-- keep credentials and secrets out of logs and out of unnecessary exposure in the firmware
+The actual goal of the project is simple:
+- power on a computer
+- power off a computer
+- restart a computer
+- detect whether the computer is currently on
+- control those actions remotely through MQTT
+
+The ESP32 is intended to be physically connected to the target computer, interacting with its front-panel control signals and a power-state indicator.
 
 ## Goal
 
-The ESP32 acts as an embedded control point for remote computer boot automation. The device is expected to stay on the local network, maintain Wi-Fi connectivity, receive commands from an MQTT broker, and trigger the expected action on the hardware connected to the target computer.
+The project aims to provide a small embedded controller that can:
+- trigger the computer power button
+- trigger the computer reset button
+- support remote power-off behavior
+- monitor whether the computer is powered on
+- expose those capabilities through MQTT for remote use
 
-Expected use cases include:
-- powering on a PC remotely
-- integrating power control with home automation or a private server
-- updating the ESP32 firmware without physical access to the device
-- reducing the risk of exposing SSIDs, passwords, tokens, or other secrets
+This is not intended to be a general-purpose PC management agent. The main purpose is hardware-level remote control of the machine power state.
 
-## Current Structure
+## Expected Hardware Design
 
-The firmware lives in `firmware/`.
+The expected setup is:
+- one output path to simulate the computer power button
+- one output path to simulate the computer reset button
+- one input path to detect whether the computer is on
+
+The intended implementation uses optocouplers:
+- one optocoupler for the power button line
+- one optocoupler for the reset button line
+- one optocoupler for reading the computer power LED or equivalent state signal
+
+This keeps the ESP32 electrically isolated from the motherboard front-panel signals and reduces the risk of directly coupling the ESP32 GPIOs to the PC circuitry.
+
+## Remote Control Through MQTT
+
+MQTT is the main remote control interface planned for the device.
+
+Expected MQTT responsibilities:
+- receive a remote command to power on the PC
+- receive a remote command to power off the PC
+- receive a remote command to restart the PC
+- publish whether the PC is currently on or off
+- expose device state and errors when needed
+
+Examples of future MQTT command topics:
+- power on
+- power off
+- restart
+- status request
+- device health or heartbeat
+
+## Power-State Detection
+
+The project is intended to detect whether the computer is on by reading a hardware state signal, such as:
+- the computer power LED through an optocoupler
+- another safe signal that is only active when the machine is powered on
+
+The current direction is to use the computer power LED path as the main state indicator.
+
+## Current Firmware Scope
+
+The firmware currently focuses on the network setup and test infrastructure needed before the MQTT and hardware control layers are finalized.
+
+Current capabilities include:
+- interactive Wi-Fi configuration through the serial console
+- Wi-Fi scan and network selection
+- protected local credential storage on the device side
+- automated integration tests for the Wi-Fi configuration flow
 
 Main files and areas:
 - `firmware/main/main.c`: application entry point
-- `firmware/main/connections/wifi.c`: Wi-Fi flow, serial console, and protected credential persistence
-- `firmware/main/input_system/`: UART interactive input and helper utilities
-- `firmware/tests/pytest_wifi_console.py`: Wi-Fi integration tests using `pytest-embedded`
+- `firmware/main/connections/wifi.c`: Wi-Fi flow, serial console, and credential persistence
+- `firmware/main/input_system/`: UART input helpers
+- `firmware/tests/pytest_wifi_console.py`: integration tests using `pytest-embedded`
 - `firmware/pyproject.toml`: Python test environment managed with `uv`
-
-## Wi-Fi Flow
-
-The current firmware includes an interactive serial console for network setup.
-
-Implemented capabilities:
-- list Wi-Fi networks ranked by signal strength
-- navigate networks in pages of 5 entries at a time
-- select a network found in the scan
-- enter the SSID manually when needed
-- enter the password interactively
-- save credentials locally for later reuse
-- retry, change password, or reselect a network when a connection fails
-
-The purpose of this flow is to avoid inconsistent states and make recovery possible without reflashing the device.
-
-## MQTT
-
-The intended project architecture uses MQTT as the main remote control channel.
-
-Expected flow:
-1. the ESP32 connects to Wi-Fi
-2. it connects to the MQTT broker
-3. it listens to authenticated command topics
-4. it triggers the hardware responsible for powering on or waking the computer
-5. it publishes status, errors, and acknowledgements when needed
-
-Examples of future responsibilities in this layer:
-- a topic for boot commands
-- a topic for device status
-- a topic for controlled remote reboot
-- a topic for OTA update trigger
-
-## OTA Through MQTT
-
-The project is also designed to support remote firmware updates.
-
-Expected architectural direction:
-- the OTA process can be triggered through MQTT
-- the MQTT message should not carry the firmware binary directly
-- the firmware should receive only trusted metadata, such as a signed URL, version, and expected hash
-- the downloaded binary should be validated before switching firmware
-
-Important OTA concerns:
-- verify artifact integrity
-- ideally validate source authenticity
-- avoid updating from arbitrary payloads published to the broker
-- keep a rollback strategy whenever possible
 
 ## Security
 
-The project is designed to avoid exposing operational secrets.
+The project should avoid exposing operational secrets in firmware, logs, or versioned files.
 
-Current and intended guidelines:
-- do not expose SSIDs or passwords in plaintext in unnecessary logs
-- do not version secrets in the repository
-- do not hardcode real tokens, real passwords, or real credentials in the firmware
-- do not store sensitive real values in versioned tests
-- store local credentials with application-side protection
-- keep the flow ready to evolve to stronger mechanisms once the production provisioning model is defined
+Important rules:
+- do not commit real SSIDs
+- do not commit real Wi-Fi passwords
+- do not commit real MQTT tokens
+- do not commit real broker usernames or passwords
+- do not hardcode real operational secrets in the firmware
+- avoid printing sensitive values in logs
 
-Sensitive items that must not be committed into versioned firmware:
-- real user SSIDs
-- real Wi-Fi passwords
-- real MQTT tokens
-- real broker usernames and passwords
-- private OTA URLs
-- API keys or operational secrets
+Sensitive values should stay outside the repository and outside versioned test defaults.
 
 ## Testing
 
-The current integration tests focus on the Wi-Fi console flow.
+The current automated tests focus on the Wi-Fi setup flow.
 
 There are two main scenarios:
-- `happy_path`: normal connection and status verification
+- `happy_path`: normal Wi-Fi connection and status verification
 - `recovery_paths`: wrong password, retry, password change, and network reselection
 
 The tests use:
-- `uv` for the Python environment
+- `uv`
 - `pytest`
 - `pytest-embedded`
-- a real board connected at `/dev/ttyUSB0`
+- a real ESP32 board connected over serial
 
-Execution example:
+Example:
 
 ```bash
 cd firmware
@@ -120,16 +116,11 @@ WIFI_TEST_SSID="YOUR_SSID" WIFI_TEST_PASSWORD="YOUR_PASSWORD" UV_CACHE_DIR=.cach
 uv run pytest --embedded-services esp,idf --port /dev/ttyUSB0 --target esp32 tests/pytest_wifi_console.py
 ```
 
-## Current Status
+## Next Steps
 
-The project already includes:
-- an ESP-IDF firmware base
-- an interactive serial console for Wi-Fi configuration
-- protected application-side credential storage
-- automated integration tests for the network setup flow
-
-The natural next steps are:
-- add the MQTT layer
-- implement the actual hardware action used to power on the target computer
-- add remote OTA with validation
-- strengthen authentication and integrity policies for production use
+The natural next steps for the project are:
+- add MQTT communication
+- add GPIO control for power and reset outputs
+- add GPIO-based PC power-state detection
+- define the MQTT command and status topics
+- add OTA support when the remote update model is finalized
