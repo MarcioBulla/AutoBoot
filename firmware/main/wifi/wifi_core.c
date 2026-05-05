@@ -287,9 +287,9 @@ void wifi_print_status(void)
     esp_err_t ret = esp_wifi_sta_get_ap_info(&ap_info);
 
     if (ret == ESP_OK) {
-        printf("Wi-Fi conectado em '%s' | RSSI %d\n", (const char *)ap_info.ssid, ap_info.rssi);
+        printf("Wi-Fi connected to '%s' | RSSI %d\n", (const char *)ap_info.ssid, ap_info.rssi);
         return;
     }
 
-    printf("Wi-Fi desconectado\n");
+    printf("Wi-Fi disconnected\n");
 }

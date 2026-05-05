@@ -8,11 +8,11 @@ from pytest_embedded_idf.dut import IdfDut
 
 WIFI_TEST_SSID = os.getenv("WIFI_TEST_SSID", "pytest")
 WIFI_TEST_PASSWORD = os.getenv("WIFI_TEST_PASSWORD", "pytest123")
-WIFI_TEST_WRONG_PASSWORD = os.getenv("WIFI_TEST_WRONG_PASSWORD", "senha_errada")
+WIFI_TEST_WRONG_PASSWORD = os.getenv("WIFI_TEST_WRONG_PASSWORD", "wrong_password")
 WIFI_AP_MANUAL = os.getenv("WIFI_AP_MANUAL", "").lower() in {"1", "true", "yes", "on"}
 
-# Comandos externos para desligar/ligar o AP durante o teste.
-# Exemplos:
+# External commands used to bring the AP down/up during tests.
+# Examples:
 # WIFI_AP_DOWN_CMD="./scripts/ap_down.sh"
 # WIFI_AP_UP_CMD="./scripts/ap_up.sh"
 WIFI_AP_DOWN_CMD = os.getenv("WIFI_AP_DOWN_CMD")
@@ -21,7 +21,7 @@ WIFI_AP_UP_CMD = os.getenv("WIFI_AP_UP_CMD")
 
 def run_required_cmd(cmd: str | None, name: str) -> None:
     if not cmd:
-        pytest.skip(f"{name} não configurado")
+        pytest.skip(f"{name} is not configured")
 
     subprocess.run(cmd, shell=True, check=True)
 
@@ -33,7 +33,7 @@ def run_optional_cmd(cmd: str | None) -> None:
 
 def _manual_ap_step(action: str, ssid: str) -> None:
     print()
-    print(f"[manual] {action} a rede/AP '{ssid}' e pressione Enter para continuar...")
+    print(f"[manual] {action} the network/AP '{ssid}' and press Enter to continue...")
     input()
 
 
@@ -43,7 +43,7 @@ def bring_ap_down(ssid: str) -> bool:
         return True
 
     if WIFI_AP_MANUAL:
-        _manual_ap_step("Desligue", ssid)
+        _manual_ap_step("Turn off", ssid)
         return True
 
     return False
@@ -55,19 +55,19 @@ def bring_ap_up(ssid: str) -> bool:
         return True
 
     if WIFI_AP_MANUAL:
-        _manual_ap_step("Ligue", ssid)
+        _manual_ap_step("Turn on", ssid)
         return True
 
     return False
 
 
 def expect_menu(dut: IdfDut) -> None:
-    dut.expect_exact("Menu Wi-Fi")
-    dut.expect_exact("1. Conectar/configurar Wi-Fi")
-    dut.expect_exact("2. Limpar credenciais salvas")
-    dut.expect_exact("3. Mostrar status")
-    dut.expect_exact("0. Voltar")
-    dut.expect_exact("Opcao: ")
+    dut.expect_exact("Wi-Fi Menu")
+    dut.expect_exact("1. Connect/configure Wi-Fi")
+    dut.expect_exact("2. Clear saved credentials")
+    dut.expect_exact("3. Show status")
+    dut.expect_exact("0. Back")
+    dut.expect_exact("Option: ")
 
 
 def open_menu(dut: IdfDut) -> None:
@@ -76,7 +76,7 @@ def open_menu(dut: IdfDut) -> None:
 
 
 def return_to_idle_prompt(dut: IdfDut) -> None:
-    dut.expect_exact("[Enter] menu Wi-Fi > ")
+    dut.expect_exact("[Enter] Wi-Fi menu > ")
 
 
 def clear_saved_credentials_from_menu(dut: IdfDut) -> None:
@@ -98,11 +98,11 @@ def start_manual_wifi_flow(dut: IdfDut, ssid: str, password: str) -> None:
 
 def start_manual_wifi_flow_from_menu(dut: IdfDut, ssid: str, password: str) -> None:
     dut.write("1\n")
-    dut.expect(re.compile(r"Escolha \[1-5/n/p/r/m\]: "), timeout=60)
+    dut.expect(re.compile(r"Choose \[1-5/n/p/r/m\]: "), timeout=60)
     dut.write("m\n")
-    dut.expect_exact("SSID manual: ")
+    dut.expect_exact("Manual SSID: ")
     dut.write(f"{ssid}\n")
-    dut.expect_exact("Senha: ")
+    dut.expect_exact("Password: ")
     dut.write(f"{password}\n")
 
 
@@ -116,7 +116,7 @@ def expect_connect_success_with_retry(dut: IdfDut, ssid: str, retries: int = 2) 
 
         result = dut.expect(
             re.compile(
-                rf"Wi-Fi connected successfully|Falha ao conectar em '{re.escape(ssid)}'"
+                rf"Wi-Fi connected successfully|Failed to connect to '{re.escape(ssid)}'"
             ),
             timeout=60,
         )
@@ -129,11 +129,11 @@ def expect_connect_success_with_retry(dut: IdfDut, ssid: str, retries: int = 2) 
             expect_menu(dut)
             return
 
-        dut.expect_exact("1. Tentar novamente")
-        dut.expect_exact("2. Digitar outra senha")
-        dut.expect_exact("3. Selecionar outra rede")
-        dut.expect_exact("0. Voltar ao menu")
-        dut.expect_exact("Opcao: ")
+        dut.expect_exact("1. Try again")
+        dut.expect_exact("2. Enter another password")
+        dut.expect_exact("3. Select another network")
+        dut.expect_exact("0. Back to menu")
+        dut.expect_exact("Option: ")
 
         if attempt == retries:
             raise AssertionError(
@@ -145,12 +145,12 @@ def expect_connect_success_with_retry(dut: IdfDut, ssid: str, retries: int = 2) 
 
 def expect_connect_failure_menu(dut: IdfDut, ssid: str) -> None:
     dut.expect_exact("Wi-Fi connection timed out or failed", timeout=60)
-    dut.expect_exact(f"Falha ao conectar em '{ssid}'", timeout=5)
-    dut.expect_exact("1. Tentar novamente")
-    dut.expect_exact("2. Digitar outra senha")
-    dut.expect_exact("3. Selecionar outra rede")
-    dut.expect_exact("0. Voltar ao menu")
-    dut.expect_exact("Opcao: ")
+    dut.expect_exact(f"Failed to connect to '{ssid}'", timeout=5)
+    dut.expect_exact("1. Try again")
+    dut.expect_exact("2. Enter another password")
+    dut.expect_exact("3. Select another network")
+    dut.expect_exact("0. Back to menu")
+    dut.expect_exact("Option: ")
 
 
 def expect_auto_connect_success(dut: IdfDut, ssid: str) -> None:
@@ -165,7 +165,7 @@ def expect_auto_connect_attempt(dut: IdfDut, ssid: str, timeout: int = 60) -> No
 
 
 def expect_boot_ready(dut: IdfDut) -> None:
-    dut.expect_exact("Console Wi-Fi pronto. Pressione Enter para abrir o menu.", timeout=30)
+    dut.expect_exact("Wi-Fi console ready. Press Enter to open the menu.", timeout=30)
     return_to_idle_prompt(dut)
 
 
@@ -180,7 +180,7 @@ def test_wifi_console_happy_path(dut: IdfDut) -> None:
     expect_connect_success_with_retry(dut, WIFI_TEST_SSID)
 
     dut.write("3\n")
-    dut.expect(re.compile(r"Wi-Fi conectado em '.*' \| RSSI -?\d+"), timeout=10)
+    dut.expect(re.compile(r"Wi-Fi connected to '.*' \| RSSI -?\d+"), timeout=10)
     expect_menu(dut)
 
     dut.write("0\n")
@@ -244,7 +244,7 @@ def test_wifi_boot_auto_connect_retries_until_network_returns(dut: IdfDut) -> No
     return_to_idle_prompt(dut)
 
     if not (WIFI_AP_DOWN_CMD and WIFI_AP_UP_CMD) and not WIFI_AP_MANUAL:
-        pytest.skip("Configure WIFI_AP_DOWN_CMD/WIFI_AP_UP_CMD ou WIFI_AP_MANUAL=1")
+        pytest.skip("Configure WIFI_AP_DOWN_CMD/WIFI_AP_UP_CMD or WIFI_AP_MANUAL=1")
 
     try:
         bring_ap_down(WIFI_TEST_SSID)
@@ -280,7 +280,7 @@ def test_wifi_console_recovery_paths(dut: IdfDut) -> None:
     expect_connect_failure_menu(dut, WIFI_TEST_SSID)
 
     dut.write("2\n")
-    dut.expect_exact("Nova senha: ")
+    dut.expect_exact("New password: ")
     dut.write(f"{WIFI_TEST_PASSWORD}\n")
     expect_connect_success_with_retry(dut, WIFI_TEST_SSID)
 
@@ -290,16 +290,16 @@ def test_wifi_console_recovery_paths(dut: IdfDut) -> None:
     expect_connect_failure_menu(dut, WIFI_TEST_SSID)
 
     dut.write("3\n")
-    dut.expect(re.compile(r"Escolha \[1-5/n/p/r/m\]: "), timeout=60)
+    dut.expect(re.compile(r"Choose \[1-5/n/p/r/m\]: "), timeout=60)
     dut.write("m\n")
-    dut.expect_exact("SSID manual: ")
+    dut.expect_exact("Manual SSID: ")
     dut.write(f"{WIFI_TEST_SSID}\n")
-    dut.expect_exact("Senha: ")
+    dut.expect_exact("Password: ")
     dut.write(f"{WIFI_TEST_PASSWORD}\n")
     expect_connect_success_with_retry(dut, WIFI_TEST_SSID)
 
     dut.write("3\n")
-    dut.expect(re.compile(r"Wi-Fi conectado em '.*' \| RSSI -?\d+"), timeout=10)
+    dut.expect(re.compile(r"Wi-Fi connected to '.*' \| RSSI -?\d+"), timeout=10)
     expect_menu(dut)
 
     dut.write("0\n")
@@ -320,7 +320,7 @@ def test_wifi_restarts_when_connected_wifi_is_lost_reason_1(dut: IdfDut) -> None
     return_to_idle_prompt(dut)
 
     if not (WIFI_AP_DOWN_CMD and WIFI_AP_UP_CMD) and not WIFI_AP_MANUAL:
-        pytest.skip("Configure WIFI_AP_DOWN_CMD/WIFI_AP_UP_CMD ou WIFI_AP_MANUAL=1")
+        pytest.skip("Configure WIFI_AP_DOWN_CMD/WIFI_AP_UP_CMD or WIFI_AP_MANUAL=1")
 
     try:
         bring_ap_down(WIFI_TEST_SSID)
@@ -338,7 +338,7 @@ def test_wifi_restarts_when_connected_wifi_is_lost_reason_1(dut: IdfDut) -> None
         )
 
         dut.expect_exact(
-            "Console Wi-Fi pronto. Pressione Enter para abrir o menu.",
+            "Wi-Fi console ready. Press Enter to open the menu.",
             timeout=90,
         )
 

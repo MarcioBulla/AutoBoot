@@ -17,11 +17,11 @@ static TaskHandle_t s_control_uart_task_handle = NULL;
 
 static void control_print_wifi_menu(void)
 {
-    printf("\nMenu Wi-Fi\n");
-    printf("1. Conectar/configurar Wi-Fi\n");
-    printf("2. Limpar credenciais salvas\n");
-    printf("3. Mostrar status\n");
-    printf("0. Voltar\n");
+    printf("\nWi-Fi Menu\n");
+    printf("1. Connect/configure Wi-Fi\n");
+    printf("2. Clear saved credentials\n");
+    printf("3. Show status\n");
+    printf("0. Back\n");
 }
 
 static void control_take_uart_control(void)
@@ -43,7 +43,7 @@ static void control_handle_wifi_menu(void)
     while (true) {
         control_print_wifi_menu();
 
-        int command_len = input_test_prompt_line("Opcao: ", command, sizeof(command), false);
+        int command_len = input_test_prompt_line("Option: ", command, sizeof(command), false);
         if (command_len <= 0) {
             ESP_LOGW(TAG, "Invalid menu option");
             continue;
@@ -86,10 +86,10 @@ static void control_uart_task(void *arg)
 {
     char trigger[8];
 
-    printf("\nConsole Wi-Fi pronto. Pressione Enter para abrir o menu.\n");
+    printf("\nWi-Fi console ready. Press Enter to open the menu.\n");
 
     while (true) {
-        int trigger_len = input_test_prompt_line_mode("\n[Enter] menu Wi-Fi > ",
+        int trigger_len = input_test_prompt_line_mode("\n[Enter] Wi-Fi menu > ",
                                                       trigger,
                                                       sizeof(trigger),
                                                       true,

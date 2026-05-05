@@ -61,3 +61,10 @@ dkms.conf
 
 # Local Codex context
 firmware/.codex
+
+# Local root documentation preview files
+/content.md
+/index.html
+
+# Local MQTT broker runtime files
+/mqtt-broker/runtime/

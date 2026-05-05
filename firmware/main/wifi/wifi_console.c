@@ -61,7 +61,7 @@ static const char *wifi_auth_mode_to_string(wifi_auth_mode_t authmode)
 {
     switch (authmode) {
         case WIFI_AUTH_OPEN:
-            return "aberta";
+            return "open";
         case WIFI_AUTH_WEP:
             return "WEP";
         case WIFI_AUTH_WPA_PSK:
@@ -79,7 +79,7 @@ static const char *wifi_auth_mode_to_string(wifi_auth_mode_t authmode)
         case WIFI_AUTH_WAPI_PSK:
             return "WAPI";
         default:
-            return "desconhecida";
+            return "unknown";
     }
 }
 
@@ -134,7 +134,7 @@ static esp_err_t wifi_scan_access_points(wifi_ap_record_t *records, size_t max_r
 
 static esp_err_t wifi_prompt_manual_ssid(char *ssid, size_t ssid_size)
 {
-    int ssid_len = input_test_prompt_line("SSID manual: ", ssid, ssid_size, false);
+    int ssid_len = input_test_prompt_line("Manual SSID: ", ssid, ssid_size, false);
     if (ssid_len <= 0) {
         ESP_LOGE(TAG, "Failed to read SSID");
         return ESP_FAIL;
@@ -152,8 +152,8 @@ static void wifi_print_scan_page(const wifi_ap_record_t *records, size_t record_
         end = record_count;
     }
 
-    printf("\nRedes Wi-Fi encontradas (%u total)\n", (unsigned int)record_count);
-    printf("Pagina %u\n", (unsigned int)(page_index + 1));
+    printf("\nWi-Fi networks found (%u total)\n", (unsigned int)record_count);
+    printf("Page %u\n", (unsigned int)(page_index + 1));
     for (size_t i = start; i < end; ++i) {
         printf("%u. %s | RSSI %d | %s\n",
                (unsigned int)(i - start + 1),
@@ -161,7 +161,7 @@ static void wifi_print_scan_page(const wifi_ap_record_t *records, size_t record_
                records[i].rssi,
                wifi_auth_mode_to_string(records[i].authmode));
     }
-    printf("n = proximas %d | p = %d anteriores | r = escanear de novo | m = SSID manual\n",
+    printf("n = next %d | p = previous %d | r = rescan | m = manual SSID\n",
            CONFIG_AUTOBOOT_WIFI_SCAN_PAGE_SIZE,
            CONFIG_AUTOBOOT_WIFI_SCAN_PAGE_SIZE);
 }
@@ -200,7 +200,7 @@ static esp_err_t wifi_select_scanned_ssid(char *ssid, size_t ssid_size)
             char prompt[40];
             snprintf(prompt,
                      sizeof(prompt),
-                     "Escolha [1-%d/n/p/r/m]: ",
+                     "Choose [1-%d/n/p/r/m]: ",
                      CONFIG_AUTOBOOT_WIFI_SCAN_PAGE_SIZE);
             int command_len = input_test_prompt_line(prompt, command, sizeof(command), false);
             if (command_len <= 0) {
@@ -254,7 +254,7 @@ static esp_err_t wifi_prompt_for_credentials(char *ssid, size_t ssid_size, char 
         return ret;
     }
 
-    int password_len = input_test_prompt_line("Senha: ", password, password_size, true);
+    int password_len = input_test_prompt_line("Password: ", password, password_size, true);
     if (password_len < 0) {
         ESP_LOGE(TAG, "Failed to read password");
         return ESP_FAIL;
@@ -266,7 +266,7 @@ static esp_err_t wifi_prompt_for_credentials(char *ssid, size_t ssid_size, char 
 
 static esp_err_t wifi_prompt_for_password_only(const char *ssid, char *password, size_t password_size)
 {
-    int password_len = input_test_prompt_line("Nova senha: ", password, password_size, true);
+    int password_len = input_test_prompt_line("New password: ", password, password_size, true);
     if (password_len < 0) {
         ESP_LOGE(TAG, "Failed to read password");
         return ESP_FAIL;
@@ -280,13 +280,13 @@ static int wifi_prompt_saved_credentials_action(const char *ssid)
 {
     char command[16];
 
-    printf("\nCredenciais salvas encontradas para '%s'\n", ssid);
-    printf("1. Tentar com as credenciais salvas\n");
-    printf("2. Selecionar outra rede/senha\n");
-    printf("0. Voltar\n");
+    printf("\nSaved credentials found for '%s'\n", ssid);
+    printf("1. Try saved credentials\n");
+    printf("2. Select another network/password\n");
+    printf("0. Back\n");
 
     while (true) {
-        int command_len = input_test_prompt_line("Opcao: ", command, sizeof(command), false);
+        int command_len = input_test_prompt_line("Option: ", command, sizeof(command), false);
         if (command_len <= 0) {
             continue;
         }
@@ -311,14 +311,14 @@ static int wifi_prompt_failed_connection_action(const char *ssid)
 {
     char command[16];
 
-    printf("\nFalha ao conectar em '%s'\n", ssid);
-    printf("1. Tentar novamente\n");
-    printf("2. Digitar outra senha\n");
-    printf("3. Selecionar outra rede\n");
-    printf("0. Voltar ao menu\n");
+    printf("\nFailed to connect to '%s'\n", ssid);
+    printf("1. Try again\n");
+    printf("2. Enter another password\n");
+    printf("3. Select another network\n");
+    printf("0. Back to menu\n");
 
     while (true) {
-        int command_len = input_test_prompt_line("Opcao: ", command, sizeof(command), false);
+        int command_len = input_test_prompt_line("Option: ", command, sizeof(command), false);
         if (command_len <= 0) {
             continue;
         }
