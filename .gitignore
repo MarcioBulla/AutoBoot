@@ -58,3 +58,6 @@ dkms.conf
 */build/
 */sdkconfig
 */sdkconfig.old
+
+# Local Codex context
+firmware/.codex
