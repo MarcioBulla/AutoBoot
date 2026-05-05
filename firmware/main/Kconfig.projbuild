@@ -1,0 +1,87 @@
+menu "AutoBoot"
+
+    menu "UART control"
+
+        config AUTOBOOT_UART_CONTROL_STOP_WAIT_MS
+            int "Maximum wait after UART takes Wi-Fi control (ms)"
+            default 3000
+            range 100 30000
+            help
+                Time to wait for the boot Wi-Fi auto-connect task to stop
+                after Enter is pressed on the UART console.
+
+        config AUTOBOOT_UART_CONTROL_TASK_STACK_SIZE
+            int "UART control task stack size"
+            default 6144
+            range 2048 16384
+            help
+                Stack size, in bytes, used by the UART control task.
+
+    endmenu
+
+    menu "Wi-Fi"
+
+        config AUTOBOOT_WIFI_STATUS_LED_GPIO
+            int "Wi-Fi status LED GPIO"
+            default 2
+            range 0 39
+            help
+                GPIO used by the Wi-Fi status LED.
+
+        config AUTOBOOT_WIFI_STATUS_LED_ACTIVE_LOW
+            bool "Wi-Fi status LED is active low"
+            default y
+            help
+                Enable this when the LED turns on with a low GPIO level.
+
+        config AUTOBOOT_WIFI_STATUS_LED_PULLUP
+            bool "Enable pull-up on Wi-Fi status LED GPIO"
+            default y
+            help
+                Enable the internal pull-up for the Wi-Fi status LED GPIO.
+
+        config AUTOBOOT_WIFI_SCAN_MAX_APS
+            int "Maximum access points stored from each scan"
+            default 32
+            range 1 64
+            help
+                Maximum number of AP records stored from one Wi-Fi scan.
+
+        config AUTOBOOT_WIFI_SCAN_PAGE_SIZE
+            int "Access points shown per scan page"
+            default 5
+            range 1 10
+            help
+                Number of APs shown on each Wi-Fi scan menu page.
+
+        config AUTOBOOT_WIFI_MANUAL_CONNECT_TIMEOUT_MS
+            int "Manual Wi-Fi connection timeout (ms)"
+            default 30000
+            range 1000 120000
+            help
+                Timeout used when connecting from the UART Wi-Fi menu.
+
+        config AUTOBOOT_WIFI_BOOT_CONNECT_TIMEOUT_MS
+            int "Boot Wi-Fi auto-connect attempt timeout (ms)"
+            default 15000
+            range 1000 120000
+            help
+                Timeout for each boot auto-connect attempt.
+
+        config AUTOBOOT_WIFI_BOOT_CONNECT_RETRY_DELAY_MS
+            int "Delay between boot auto-connect retries (ms)"
+            default 1500
+            range 0 60000
+            help
+                Delay before the next boot auto-connect attempt.
+
+        config AUTOBOOT_WIFI_BOOT_TASK_STACK_SIZE
+            int "Boot Wi-Fi auto-connect task stack size"
+            default 4096
+            range 2048 16384
+            help
+                Stack size, in bytes, used by the boot Wi-Fi auto-connect task.
+
+    endmenu
+
+endmenu

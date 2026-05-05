@@ -4,16 +4,22 @@ idf_component_register(
                           "input_system/input_test.c"
                           "input_system/storage_text.c"
                           "input_system/storage_vfs.c"
-                          "connections/wifi.c"
+                          "wifi/wifi_boot.c"
+                          "wifi/wifi_console.c"
+                          "wifi/wifi_core.c"
+                          "wifi/wifi_credentials.c"
+                          "control/control.c"
 
                       INCLUDE_DIRS 
                           "."
                           "input_system"
-                          "connections"
+                          "wifi"
+                          "control"
                       PRIV_REQUIRES
                           esp_event
                           esp_netif
                           esp_wifi
+                          esp_driver_gpio
                           nvs_flash
                           esp_driver_uart
                           spiffs
