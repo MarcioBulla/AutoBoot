@@ -49,3 +49,4 @@ services:
     volumes:
       - "${BASE_DIR}/letsencrypt:/etc/letsencrypt:ro,z"
       - "${BASE_DIR}/data:/mosquitto/data:z"
+      - "${BASE_DIR}/pki:/broker-pki:ro,z"

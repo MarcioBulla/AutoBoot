@@ -19,6 +19,10 @@ fi
 if [ "${CERTBOT_MODE}" = "renew" ]; then
   trap 'exit 0' TERM INT
 
+  # Avoid racing the init container on the first compose startup.
+  sleep 300 &
+  wait "$!"
+
   while :; do
     certbot renew --standalone --non-interactive ${CERTBOT_ARGS:-}
     sleep 12h &
