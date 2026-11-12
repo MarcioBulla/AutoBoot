@@ -1,0 +1,10 @@
+[project]
+name = "autoboot-tools"
+version = "0.1.0"
+description = "USB provisioning tool for AutoBoot"
+requires-python = ">=3.10"
+dependencies = ["pyserial>=3.5"]
+
+[tool.uv]
+# The standalone script is run with `uv run --script`; never create .venv here.
+managed = false

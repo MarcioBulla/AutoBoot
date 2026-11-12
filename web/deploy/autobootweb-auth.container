@@ -1,0 +1,36 @@
+[Unit]
+Description=AutoBootWeb authentication API
+Requires=sites-nginx.service
+After=sites-nginx.service
+PartOf=sites-nginx.service
+
+[Container]
+Image=docker.io/library/node@sha256:c0a93797ee78814ae6d32fcca2561fdbbe423149c3f5389aad32d86e9fd85bd4
+ContainerName=autobootweb-auth
+Network=container:sites-nginx
+UserNS=keep-id:uid=1000,gid=1000
+User=1000:1000
+Volume=/opt/autobootweb/app/server.mjs:/app/server.mjs:ro
+Volume=/var/lib/autobootweb:/data
+WorkingDir=/app
+Environment=API_ONLY=true
+Environment=AUTH_DATA_DIR=/data
+Environment=COOKIE_SECURE=true
+Environment=HOST=127.0.0.1
+Environment=NODE_ENV=production
+Environment=PORT=18083
+Environment=TRUST_PROXY=true
+Exec=node /app/server.mjs
+ReadOnly=true
+Tmpfs=/tmp:rw,nosuid,nodev,noexec,size=16m,mode=1777
+NoNewPrivileges=true
+DropCapability=all
+PodmanArgs=--memory=256m --memory-swap=256m --cpus=0.5 --pids-limit=128
+
+[Service]
+Restart=on-failure
+RestartSec=5
+TimeoutStartSec=120
+
+[Install]
+WantedBy=default.target

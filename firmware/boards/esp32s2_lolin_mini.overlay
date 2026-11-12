@@ -1,0 +1,109 @@
+#include <zephyr/dt-bindings/gpio/gpio.h>
+
+/ {
+	aliases {
+		setup-button = &setup_button;
+		pc-start = &pc_start;
+		pc-restart = &pc_restart;
+		pc-pled = &pc_pled;
+	};
+
+	chosen {
+		zephyr,console = &uart1;
+		zephyr,shell-uart = &uart1;
+		zephyr,settings-partition = &storage_partition;
+	};
+
+	setup_buttons {
+		compatible = "gpio-keys";
+		debounce-interval-ms = <30>;
+		setup_button: setup_button {
+			label = "Setup button (GPIO16 to GND)";
+			gpios = <&gpio0 16 (GPIO_PULL_UP | GPIO_ACTIVE_LOW)>;
+		};
+	};
+};
+
+/ {
+	autoboot_outputs {
+		compatible = "gpio-leds";
+		pc_start: pc_start {
+			gpios = <&gpio0 11 GPIO_ACTIVE_HIGH>;
+		};
+		pc_restart: pc_restart {
+			gpios = <&gpio0 9 GPIO_ACTIVE_HIGH>;
+		};
+	};
+
+	autoboot_inputs {
+		compatible = "gpio-keys";
+		pc_pled: pc_pled {
+			gpios = <&gpio0 12 (GPIO_PULL_UP | GPIO_ACTIVE_LOW)>;
+		};
+	};
+};
+
+&{/soc} {
+	zephyr_udc0: usb_otg@60080000 {
+		compatible = "espressif,esp32-usb-otg-fs", "snps,dwc2";
+		reg = <0x60080000 0x40000>;
+		status = "okay";
+		interrupts = <USB_INTR_SOURCE IRQ_DEFAULT_PRIORITY 0>;
+		interrupt-parent = <&intc>;
+		clocks = <&clock ESP32_USB_MODULE>;
+		num-out-eps = <6>;
+		num-in-eps = <6>;
+		ghwcfg1 = <0x00000000>;
+		ghwcfg2 = <0x224dd930>;
+		ghwcfg4 = <0xd3f0a030>;
+		g-rx-fifo-size = <64>;
+		g-np-tx-fifo-size = <16>;
+		g-tx-fifo-size = <32 32 32 24>;
+		phy-dp-pin = <20>;
+		phy-dm-pin = <19>;
+
+		cdc_acm_uart0: cdc_acm_uart0 {
+			compatible = "zephyr,cdc-acm-uart";
+			label = "AutoBoot USB";
+		};
+	};
+};
+
+/* Keep the ROM download button separate from the application button. */
+&user_button {
+	gpios = <&gpio0 0 (GPIO_PULL_UP | GPIO_ACTIVE_LOW)>;
+};
+
+&user_led {
+	gpios = <&gpio0 15 GPIO_ACTIVE_HIGH>;
+};
+
+/* UART0 is unused; route the console and shell through UART1. */
+&uart0 {
+	status = "disabled";
+};
+
+&uart1 {
+	status = "okay";
+	current-speed = <115200>;
+	pinctrl-0 = <&uart1_default>;
+	pinctrl-names = "default";
+};
+
+
+&pinctrl {
+	uart1_default: uart1_default {
+	group1 {
+		pinmux = <UART1_TX_GPIO17>;
+		output-high;
+	};
+	group2 {
+		pinmux = <UART1_RX_GPIO18>;
+		bias-pull-up;
+	};
+	};
+};
+
+&wifi {
+	status = "okay";
+};

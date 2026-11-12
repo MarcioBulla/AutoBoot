@@ -1,0 +1,106 @@
+name: Astro build and publish
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  publish:
+    runs-on: astro
+    timeout-minutes: 15
+    container:
+      image: sha256:11e8d7d2765362de0138743ba102f94aed60e07862d528b0cef49c27383671c5
+      volumes:
+        - coldlab-deps-astro-template:/cache
+    env:
+      CI_COMMIT: "${{ github.sha }}"
+      CI_RUN: "${{ github.run_number }}"
+      CI_REPO: "${{ github.repository }}"
+      NPM_CONFIG_CACHE: /cache/npm
+      BUN_INSTALL_CACHE_DIR: /cache/bun
+    steps:
+      - name: Checkout private sources through the local Forgejo endpoint
+        env:
+          CI_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
+        run: |
+          python3 <<'PYCODE'
+          import base64
+          import os
+          import re
+          import subprocess
+
+          sha = os.environ['CI_COMMIT']
+          repo = os.environ['CI_REPO']
+          token = os.environ['CI_TOKEN']
+          assert re.fullmatch(r'[a-f0-9]{40}', sha)
+          assert re.fullmatch(r'[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+', repo)
+          url = 'http://10.0.2.2:13000/' + repo + '.git'
+          env = os.environ.copy()
+          for name in list(env):
+              if name.startswith('GIT_TRACE') or name == 'GIT_CURL_VERBOSE':
+                  env.pop(name)
+          values = [
+              ('http.extraHeader', 'Authorization: Basic ' + base64.b64encode(('x-access-token:' + token).encode()).decode()),
+              ('credential.helper', ''),
+          ]
+          env['GIT_CONFIG_COUNT'] = str(len(values))
+          env['GIT_TERMINAL_PROMPT'] = '0'
+          for i, (key, value) in enumerate(values):
+              env['GIT_CONFIG_KEY_' + str(i)] = key
+              env['GIT_CONFIG_VALUE_' + str(i)] = value
+          for args in [
+              ['git', 'init', '.'],
+              ['git', 'remote', 'add', 'origin', url],
+              ['git', 'fetch', '--no-tags', '--depth=1', 'origin', sha],
+              ['git', 'checkout', '--detach', 'FETCH_HEAD'],
+          ]:
+              result = subprocess.run(args, env=env, capture_output=True)
+              if result.returncode:
+                  raise SystemExit('Authenticated checkout failed: ' + args[1])
+          assert subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip() == sha
+          PYCODE
+      - name: Install dependencies and build the static site
+        run: |
+          bun install --frozen-lockfile
+          bun run build
+      - name: Package the static output with checksums
+        run: python3 scripts/pack-output.py "${CI_COMMIT}-${CI_RUN}" /tmp/autobootweb-release.tar.gz
+      - name: Publish through restricted SSH
+        env:
+          SITES_DEPLOY_KEY: "${{ secrets.SITES_DEPLOY_KEY }}"
+          SITES_KNOWN_HOSTS: "${{ secrets.SITES_KNOWN_HOSTS }}"
+        run: |
+          python3 <<'PYCODE'
+          from pathlib import Path
+          import os
+          import re
+          import subprocess
+          import tempfile
+
+          if not os.environ.get('SITES_DEPLOY_KEY'):
+              print('Build complete; deployment requires a dedicated per-site SSH key.')
+              raise SystemExit(0)
+          revision = os.environ['CI_COMMIT'] + '-' + os.environ['CI_RUN']
+          assert re.fullmatch(r'[a-f0-9]{40}-[0-9]{1,12}', revision)
+          with tempfile.TemporaryDirectory(prefix='autobootweb-deploy-') as folder:
+              key = Path(folder) / 'key'
+              known = Path(folder) / 'known_hosts'
+              key.write_text(os.environ['SITES_DEPLOY_KEY'].rstrip() + '\n')
+              key.chmod(0o600)
+              known.write_text(os.environ['SITES_KNOWN_HOSTS'].rstrip() + '\n')
+              known.chmod(0o600)
+              command = [
+                  'ssh', '-F', '/dev/null', '-i', str(key),
+                  '-o', 'BatchMode=yes', '-o', 'IdentitiesOnly=yes',
+                  '-o', 'StrictHostKeyChecking=yes',
+                  '-o', 'UserKnownHostsFile=' + str(known),
+                  '-o', 'HostKeyAlias=coldlab-local',
+                  'sites@10.0.2.2', 'publish ' + revision,
+              ]
+              env = os.environ.copy()
+              env.pop('SITES_DEPLOY_KEY', None)
+              env.pop('SITES_KNOWN_HOSTS', None)
+              with open('/tmp/autobootweb-release.tar.gz', 'rb') as artifact:
+                  subprocess.run(command, stdin=artifact, env=env, check=True)
+          PYCODE

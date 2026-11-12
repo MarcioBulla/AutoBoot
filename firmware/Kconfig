@@ -1,0 +1,27 @@
+mainmenu "AutoBoot Configuration"
+
+config AUTOBOOT_DEVICE_NAME
+	string "Device name"
+	default "AutoBoot"
+	help
+	  Device name used as the prefix of the MQTT client identifier.
+	  A Wi-Fi MAC suffix is added when available to keep identifiers unique.
+
+config AUTOBOOT_MQTT_BROKER_HOST
+	string "MQTT broker hostname"
+	default "mqtt.example.com"
+	help
+	  Broker DNS hostname. This is also used as TLS SNI and the certificate
+	  hostname, so do not set this to an IP address.
+
+config AUTOBOOT_MQTT_BROKER_PORT
+	int "MQTT over TLS WebSocket port"
+	default 18443
+	range 1 65535
+
+config AUTOBOOT_PC_PULSE_MS
+	int "PC control pulse duration in milliseconds"
+	default 500
+	range 50 5000
+
+source "Kconfig.zephyr"

@@ -1,0 +1,29 @@
+{
+  "name": "autobootweb",
+  "type": "module",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "astro build && node server.mjs",
+    "build": "astro build",
+    "start": "node server.mjs",
+    "preview": "node server.mjs",
+    "bundle:auth": "mkdir -p build/auth && bun build ./server.mjs --target=node --packages=bundle --outfile=build/auth/server.mjs",
+    "astro": "astro"
+  },
+  "dependencies": {
+    "@astrojs/vue": "^7.1.4",
+    "@simplewebauthn/browser": "^14.0.0",
+    "@simplewebauthn/server": "^14.1.0",
+    "astro": "^7.4.10",
+    "mqtt": "^5.16.1",
+    "node-forge": "^1.4.3",
+    "otpauth": "^9.6.0",
+    "qrcode": "^1.5.4",
+    "vue": "^3.5.45"
+  },
+  "devDependencies": {
+    "@types/node-forge": "^1.3.14",
+    "@types/qrcode": "^1.5.6"
+  }
+}

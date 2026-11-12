@@ -1,0 +1,53 @@
+# Private identity and credentials
+*.crt
+*.csr
+*.pem
+*.key
+*.p12
+*.pfx
+*.jks
+*.keystore
+.env
+.env.*
+!.env.example
+broker.env
+secrets/
+credentials/
+
+# Local agent and editor state
+AGENTS.md
+MEMORY.md
+.serena/
+.cache/
+.codex/
+.agents/
+.aws/
+.vscode/
+.idea/
+
+# Build outputs and generated artifacts
+**/build/
+**/build-*/
+**/build_*/
+twister-out*/
+dist/
+node_modules/
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+*.elf
+*.bin
+*.hex
+*.map
+*.log
+
+# KiCad local state and backups
+*.kicad_prl
+*.lck
+_autosave-*
+*-backups/
+*.bak
+*.tmp
+*~
+.DS_Store
